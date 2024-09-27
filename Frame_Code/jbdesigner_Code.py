@@ -1,3 +1,5 @@
+import json
+
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QBrush, QColor, QFont, QIcon
 from PyQt5.QtWidgets import QListWidgetItem, QMessageBox
@@ -53,20 +55,28 @@ class jb_Dialog(QtWidgets.QDialog, Ui_Ui_jbdesigner):
         for i in range(self.listWidget.count()):
             selectMode = ''
             icon_path = ''
+            para1 = ''
+            para2 = ''
             # 改变显示的item的名称和图片
-            if self.eventList[i][1] == -1:
+            if self.eventList[i]["eventType"] == "keyEvent":
                 selectMode = '按键'
                 icon_path = './picture/keyboard.jpg'
-            elif self.eventList[i][1] == -2:
+                para1 = str(self.eventList[i]["keyEvent"])
+                para2 = str(self.eventList[i]["statu"])
+            elif self.eventList[i]["eventType"] == "mouseMove":
                 selectMode = '鼠标移动'
                 icon_path = './picture/mouse.jpg'
-            elif self.eventList[i][1] == -3:
+                para1 = str(self.eventList[i]["posX"])
+                para2 = str(self.eventList[i]["posY"])
+            elif self.eventList[i]["eventType"] == "Delay":
                 selectMode = '延时'
                 icon_path = './picture/clock.jpg'
-            elif self.eventList[i][1] == -4:
+                para1 = str(self.eventList[i]["time"])
+            elif self.eventList[i]["eventType"] == "runFile":
                 selectMode = '运行指定脚本'
                 icon_path = './picture/file.jpg'
-            strI = '{}  {} {} {}'.format(str(i + 1), selectMode, self.eventList[i][2], self.eventList[i][3])
+                para1 = str(self.eventList[i]["fileName"])
+            strI = '{}  {} {} {}'.format(str(i + 1), selectMode, para1, para2)
 
             # 配置一个item
             item = self.listWidget.item(i)  # 赋值对应item
@@ -77,7 +87,7 @@ class jb_Dialog(QtWidgets.QDialog, Ui_Ui_jbdesigner):
             # 更新每个项的文本
             item.setText(strI)
 
-            self.eventList[i][0] = i
+            self.eventList[i]["timeSeq"] = i
 
     # 保存事件函数，将在窗口关闭时调用
     def save_event(self):
@@ -101,15 +111,18 @@ class jb_Dialog(QtWidgets.QDialog, Ui_Ui_jbdesigner):
     def save_all(self):
         if self.lineEdit.text() != '' and is_valid_path(self.lineEdit.text()):  # 文件路径判断
             with open(self.lineEdit.text(), 'w') as file:
+                end = {"timeSeq": self.eventList[len(self.eventList)], "eventType": "end"}
+                self.eventList.append(end)
+                json.dump(self.eventList, file, indent=4)
 
-                # 遍历事件列表，将列表元素拼接成字符串
+                """# 遍历事件列表，将列表元素拼接成字符串
                 for i in self.eventList:
                     if i[1] == -1:
                         lstr = '{} {} {}\n'.format(str(i[1]), ord(i[2]), i[3])
                     else:
                         lstr = '{} {} {}\n'.format(i[1], i[2], i[3])
                     file.write(lstr)
-                file.write('-256 0 0') # 封顶事件，结束标志
+                file.write('-256 0 0') # 封顶事件，结束标志"""
             self.save_flag = True
             self.close()
         else:

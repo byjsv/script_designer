@@ -16,7 +16,7 @@ class Event_menu(QtWidgets.QDialog, Ui_Ui_EventMenu):
     def __init__(self, parent=None):
         super(Event_menu, self).__init__(parent)
         self.setupUi(self)
-        self.one_event = []
+        self.one_event = {}
         self.save_flag = False
 
         self.Button_acept.clicked.connect(self.send_event)
@@ -56,7 +56,8 @@ class Event_menu(QtWidgets.QDialog, Ui_Ui_EventMenu):
             QMessageBox.information(self, '提示', '未输入参数')
         elif self.comboBox.currentIndex() == 0 and not if_ASCII(self.lineEdit.text()):
             QMessageBox.information(self, '提示', '非按键')
-        elif self.comboBox.currentIndex() == 1 and (not only_num(self.lineEdit.text()) or not only_num(self.lineEdit_2.text())):
+        elif self.comboBox.currentIndex() == 1 and (
+                not only_num(self.lineEdit.text()) or not only_num(self.lineEdit_2.text())):
             QMessageBox.information(self, '提示', '非坐标')
         elif self.comboBox.currentIndex() == 2 and not only_num(self.lineEdit.text()):
             QMessageBox.information(self, '提示', '非时间数字')
@@ -64,8 +65,16 @@ class Event_menu(QtWidgets.QDialog, Ui_Ui_EventMenu):
             QMessageBox.information(self, '提示', '不存在的路径或名称')
         else:
             self.save_flag = True
-            self.one_event = [self.spinBox.value(), -(self.comboBox.currentIndex() + 1),
-                              self.lineEdit.text(), self.lineEdit_2.text()]
+            if self.comboBox.currentText() == '按键':
+                self.one_event = {"timeSeq": 0, "eventType": "keyEvent", "keyOrd": ord(self.lineEdit.text()), "statu": int(self.lineEdit_2.text())}
+            elif self.comboBox.currentText() == '鼠标移动':
+                self.one_event = {"timeSeq": 0, "eventType": "mouseMove", "keyOrd": int(self.lineEdit.text()), "statu": int(self.lineEdit_2.text())}
+            elif self.comboBox.currentText() == '延时':
+                self.one_event = {"timeSeq": 0, "eventType": "Delay", "time": int(self.lineEdit.text())}
+            elif self.comboBox.currentText() == '运行指定脚本':
+                self.one_event = {"timeSeq": 0, "eventType": "runFile", "fileName": self.lineEdit.text()}
+
+            """self.one_event = [self.spinBox.value(), -(self.comboBox.currentIndex() + 1),
+                              self.lineEdit.text(), self.lineEdit_2.text()]"""
             print(self.one_event)
             self.close()
-
