@@ -1,3 +1,5 @@
+import json
+
 import win32api
 import win32con
 import win32gui
@@ -23,6 +25,8 @@ class jb_Output(QThread):
     def set_messageList(self):
         """ 从文件中读取工作列表 """
         with open(self.filepath, 'r') as file:
+            self.workList = json.load(file)
+            """
             for i in file.readlines():
                 lstr = i.split()
                 if int(lstr[0]) == -4:
@@ -30,7 +34,7 @@ class jb_Output(QThread):
                 else:
                     xstr = [int(x) for x in lstr]
                 self.workList.append(xstr)
-
+"""
     def updateRect(self):
         """ 更新窗口矩形区域 """
         if self.hwnd is not None:
@@ -56,6 +60,7 @@ class jb_Output(QThread):
             self.hwnd = win32gui.FindWindow(None, gameName)
             self.updateRect()
             self.FullWindowRect = self.windowRect  # 设置全窗口矩形区域
+
 
     def sleep(self, t):
         """ 等待指定时间或直到按下退出按键 """
@@ -166,29 +171,22 @@ class jb_Output(QThread):
                 print('当前事件已执行完毕')
                 break
 
-            if self.workList[line][0] < currentTime:
-                if self.workList[line][0] < 0:
-                    if self.workList[line][0] == -1:  # 按键操作
-                        self.select_key(self.workList[line][1], self.workList[line][2])
-                    elif self.workList[line][0] == -2:  # 鼠标移动
-                        self.moveto(self.workList[line][1], self.workList[line][2])
-                    elif self.workList[line][0] == -3:  # 延时
-                        self.sleep(self.workList[line][1])
-                    elif self.workList[line][0] == -4:  # 运行指定脚本
-                        jb = jb_Output()
-                        jb.filepath = self.workList[line][1]
-                        jb.set_messageList()
-                        jb.run()
+            if self.workList[line]["timeSeq"] < currentTime:
+                if self.workList[line]["eventType"] == "keyEvent":
+                    self.select_key(self.workList[line]["keyOrd"], self.workList[line]["statu"])
+                elif self.workList[line]["eventType"] == "mouseMove":
+                    self.moveto(self.workList[line]["posX"], self.workList[line]["posY"])
+                elif self.workList[line]["eventType"] == "Delay":
+                    self.sleep(self.workList[line]["time"])
+                elif self.workList[line]["eventType"] == "runFile":
+                    jb = jb_Output()
+                    jb.filepath = self.workList[line]["fileName"]
+                    jb.set_messageList()
+                    jb.run()
+                elif self.workList[line]["eventType"] == "end":
+                    break
 
-                    line += 1
-                else:
-                    if self.workList[line][1] < 0:
-                        if self.workList[line][1] == -256:
-                            break
-                        self.press_key(0 - self.workList[line][1], self.workList[line][2])
-                    else:
-                        self.moveto(self.workList[line][1], self.workList[line][2])
-                    line += 1
+                line += 1
 
     def stop(self):
         self._running = False
